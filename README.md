@@ -518,12 +518,11 @@ Scenario-based experiments using `UNMON_PATH` can be added to a separate noteboo
 
 ### 8-4. Run in Google Colab
 
-You can also run our codes in Google Colabatory.
-
-Please press the buttons if you want:
+You can also open the notebook in Colab using the buttons below:
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kyungh2e2e/Molock_ML25-2/blob/main/baseline_feature10.ipynb)
 
 ---
+
 
 
 
