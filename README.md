@@ -447,7 +447,7 @@ This utility is reused for:
 
 ## 7. Scenario-Based Experiments 
 
-7.1 Closed-World Scenario (Scenario 1)
+## 7.1 Closed-World Scenario (Scenario 1)
 
 * Goal:
 Classify a traffic trace into one of the 95 monitored websites.
@@ -471,11 +471,11 @@ Accuracy: ~79.5%
 
 * Conclusion: Data quality (cleaning) and expressive handcrafted features (percentiles, bursts, cumulative signals) were more impactful than model complexity.
 
-7.2 Open-World Scenario
+## 7.2 Open-World Scenario
 
 In the open-world setting, the classifier must distinguish monitored traffic from unknown / unmonitored traffic.
 
-7.2.1 Binary Detection (Scenario 2)
+### 7.2.1 Binary Detection (Scenario 2)
 
 * Goal:
 Detect whether a trace is Monitored (1) or Unmonitored (-1).
@@ -491,13 +491,13 @@ Imbalance Handling: SMOTE + Tomek (hybrid oversampling & cleaning)
 
 * Key Result:
 
-** Precision: ~94% (low false alarm rate)
+  *Precision: ~94% (low false alarm rate)
 
-** Recall: Balanced detection of unmonitored traffic
+  *Recall: Balanced detection of unmonitored traffic
 
-** Conclusion: SMOTE+Tomek outperformed undersampling by preserving precision and improving recall.
+  *Conclusion: SMOTE+Tomek outperformed undersampling by preserving precision and improving recall.
 
-7.2.2 Multi-Class Identification (Scenario 3)
+### 7.2.2 Multi-Class Identification (Scenario 3)
 
 * Goal:
 Identify the website (0–94) or reject as Unmonitored (-1) → 96 classes total
@@ -586,6 +586,7 @@ baseline_feature10.ipynb : [![Open In Colab](https://colab.research.google.com/a
 final_code_featureSelection.ipynb : [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kyungh2e2e/Molock_ML25-2/blob/main/final_code_featureSelection.ipynb)
 
 ---
+
 
 
 
