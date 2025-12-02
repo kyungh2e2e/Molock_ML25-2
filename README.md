@@ -516,17 +516,11 @@ Run all cells to:
 
 Scenario-based experiments using `UNMON_PATH` can be added to a separate notebook or appended to the same one under **Section 7**.
 
----
+### 8-4. Run in Google Colab
 
-## 9. Notes & Limitations
-
-* The model currently uses **Random Forests** and **handcrafted statistical features**; it is meant as a **strong classical baseline**, not a deep-learning SOTA system.
-* Feature selection thresholds (correlation cutoff, importance cutoff, IQR multiplier) can be tuned per dataset.
-* The pipeline assumes preprocessed datasets (`mon_standard.pkl`, `unmon_standard10.pkl`). Data preprocessing steps are **not** included in this repository.
-* The 26-feature configuration aims to balance:
-
-  * Model simplicity
-  * Interpretability
-  * Performance is better than the 37-feature baseline.
+You can also run our codes in Google Colabatory.
+Please press the buttons if you want:
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://github.com/kyungh2e2e/Molock_ML25-2/blob/main/baseline_feature10.ipynb)
 
 ---
+
