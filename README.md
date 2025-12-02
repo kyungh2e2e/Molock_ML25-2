@@ -22,11 +22,12 @@ This repository contains:
 
 ```bash
 .
-├── baseline_feature10.ipynb      # Simple closed-world baseline (10 features)
-├── final_model_feature37.ipynb   # Final 37→27→26 feature selection + RF comparison
+├── baseline_feature10.ipynb            # Simple closed-world baseline (10 features)
+├── final_code_featureSelection.ipynb   # Final 37→27→26 feature selection
+├──
 ├── data/
-│   ├── mon_standard.pkl          # place monitored dataset here
-│   ├── unmon_standard10.pkl      # place unmonitored dataset 
+│   ├── mon_standard.pkl                # place monitored dataset here
+│   ├── unmon_standard10.pkl            # place unmonitored dataset 
 └── README.md
 ```
 <br/>
@@ -522,7 +523,10 @@ You can also open the notebook in Colab using the buttons below.
 
 baseline_feature10.ipynb : [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kyungh2e2e/Molock_ML25-2/blob/main/baseline_feature10.ipynb)
 
+final_code_featureSelection.ipynb : [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kyungh2e2e/Molock_ML25-2/blob/main/final_code_featureSelection.ipynb)
+
 ---
+
 
 
 
