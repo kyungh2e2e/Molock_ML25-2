@@ -22,12 +22,16 @@ This repository contains:
 
 ```bash
 .
-├── baseline_feature10.ipynb        # Simple closed-world baseline (10 handcrafted features)
-├── final_model_feature37.ipynb     # Final 37→27→26 feature selection + RF comparison
-├── mon_standard.pkl                # Monitored (labeled) traffic dataset
-├── unmon_standard10.pkl            # Unmonitored traffic for open-world tests
+├── baseline_feature10.ipynb      # Simple closed-world baseline (10 handcrafted features)
+├── final_model_feature37.ipynb   # Final 37→27→26 feature selection + RF comparison
+├── data/
+│   ├── mon_standard.pkl          # place monitored dataset here
+│   ├── unmon_standard10.pkl      # place unmonitored dataset 
 └── README.md
 ```
+<br/>
+Note: Due to size and privacy constraints, the dataset files (`mon_standard.pkl`, `unmon_standard10.pkl`) are not included in this repository. Please place them under the data/ directory as shown above.
+
 ---
 
 ## 2. Data Description
