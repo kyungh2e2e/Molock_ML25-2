@@ -445,17 +445,89 @@ This utility is reused for:
 
 ---
 
-## 7. Scenario-Based Experiments (TBD)
+## 7. Scenario-Based Experiments 
 
->
-임시내용 작성
-### 7.1 Closed-World Scenario
+## 7.1 Closed-World Scenario (Scenario 1)
+Goal:
+Classify a traffic trace into one of the 95 monitored websites.
 
+Data:
+X_mon_clean, y_mon_clean (Monitored dataset only)
 
-### 7.2 Open-World Scenario
+Setup:
 
+Feature Set: Final 26 features
 
-### 7.3 Ablation & Sensitivity Analyses
+Preprocessing: IQR-based outlier removal (strict: 1.5×IQR)
+
+Model: Random Forest Classifier (tuned hyperparameters)
+
+Validation: 80/20 stratified train/test split
+
+Key Result:
+
+Accuracy: ~79.5%
+
+Observation: Feature expressiveness (e.g., percentiles, burst features) and dataset cleanliness have a greater impact on accuracy than model complexity.
+
+## 7.2 Open-World Scenario
+
+In the open-world setting, the model must distinguish between monitored traffic and unknown (unmonitored) background traffic.
+
+### 7.2.1 Binary Detection (Scenario 2)
+
+Goal:
+Determine whether a trace is Monitored (1) or Unmonitored (-1).
+
+Challenge:
+Severe class imbalance (Monitored samples ≫ Unmonitored samples)
+
+Strategy:
+
+Imbalance Handling:
+Applied SMOTE + Tomek Links (hybrid sampling) to:
+
+create synthetic unmonitored samples
+
+clean overlapping regions in feature space
+
+Model: Random Forest (depth limit removed to capture complex boundaries)
+
+Key Result:
+
+Precision: ~94% (low false alarms)
+
+Recall: Balanced detection rate for unmonitored traffic
+
+Takeaway: SMOTE+Tomek significantly outperformed simple undersampling by maintaining high precision and improving recall.
+
+### 7.2.2 Multi-Class Identification (Scenario 3)
+
+Goal:
+Identify the exact website (0–94) or reject it as Unmonitored (-1) → total 96 classes
+
+Strategy:
+
+Input:
+
+Cleaned monitored samples
+
+Raw unmonitored samples
+
+Model:
+Random Forest with class_weight="balanced"
+
+Method:
+Single-stage multi-class classification (96-way)
+
+Key Result:
+
+Overall Accuracy: ~75%
+
+Unmonitored Recall (Rejection Rate): ~77.5%
+
+Comparison:
+In this feature space, Random Forest clearly outperformed MLP neural networks in both training speed and balanced accuracy.
 
 
 ---
@@ -526,6 +598,7 @@ baseline_feature10.ipynb : [![Open In Colab](https://colab.research.google.com/a
 final_code_featureSelection.ipynb : [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kyungh2e2e/Molock_ML25-2/blob/main/final_code_featureSelection.ipynb)
 
 ---
+
 
 
 
