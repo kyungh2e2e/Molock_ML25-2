@@ -1,7 +1,7 @@
 # Closed- & Open-World Website Fingerprinting
 **Team 07 Molock**
 
-> 🔎 Machine Learning Team Project — **Closed-world baseline**, plus a **37 → 27 → 26 feature selection pipeline** for Closed- & Open-World evaluation.
+> 🔎 Machine Learning Team Project — **Closed-world baseline**, plus a **feature selection and modeling pipeline** for Closed- & Open-World evaluation.
 
 This repository contains:
 
@@ -13,25 +13,109 @@ This repository contains:
     - Zero-importance pruning  
     - IQR-based outlier removal  
     - Ablation study and small combinatorial search
-  - Prepares models that can be evaluated in **closed-world** and **open-world** scenarios.
+  - Prepares models that can be evaluated in **closed-world** and **open-world** scenarios (binary detection, multi-class, and hierarchical two-stage).
+
+---
+
+## 🚀 Quick Start
+
+### 0.1 Requirements
+
+```bash
+python >= 3.8
+pip install -r requirements.txt
+```
+
+---
+
+### 0.2 Dataset Setup
+
+Due to size, the dataset `.pkl` files are **not included** in this repository.
+
+Expected files:
+
+```text
+data/
+ ├── mon_standard.pkl       # monitored traffic
+ └── unmon_standard10.pkl   # unmonitored traffic (for open-world)
+```
+
+You can either:
+
+#### (A) Run locally
+
+Place the `.pkl` files under a `data/` directory and set paths in the notebooks, e.g.:
+
+```python
+MON_PATH = "data/mon_standard.pkl"
+UNMON_PATH = "data/unmon_standard10.pkl"
+```
+
+#### (B) Run in Google Colab (with Google Drive)
+
+Upload the dataset to your own Google Drive and mount it:
+
+```python
+from google.colab import drive
+drive.mount('/content/drive')
+
+DATA_DIR = "/content/drive/MyDrive/"  # <- modify this
+MON_PATH = DATA_DIR + "mon_standard.pkl"
+UNMON_PATH = DATA_DIR + "unmon_standard10.pkl"
+```
+
+If the dataset is not found, update `DATA_DIR` to match your own Drive path.
+
+---
+
+### 0.3 Minimal Run Order
+
+#### (A) Run locally
+
+1. **Closed-world baseline**
+
+   ```bash
+   jupyter notebook baseline_feature10.ipynb
+   ```
+
+2. **Feature selection (37 → 27 → 26)**
+
+   ```bash
+   jupyter notebook final_code_featureSelection.ipynb
+   ```
+
+3. **Closed/Open-world modeling & scenarios**
+
+   ```bash
+   jupyter notebook final_modeling_code.ipynb
+   ```
+
+For detailed descriptions, see Section **8. How to Run (Detailed)**.
+
+#### (B) Run in Google Colab
+
+Open the notebooks in Colab using the buttons below.
+
+baseline_feature10.ipynb : [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kyungh2e2e/Molock_ML25-2/blob/main/baseline_feature10.ipynb)
+
+final_code_featureSelection.ipynb : [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kyungh2e2e/Molock_ML25-2/blob/main/final_code_featureSelection.ipynb)
+
+final_modeling_code.ipynb : [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kyungh2e2e/Molock_ML25-2/blob/main/final_modeling_code.ipynb)
 
 
 ---
 
 ## 1. Repository Structure
 
-```bash
+```text
 .
-├── baseline_feature10.ipynb            # Simple closed-world baseline (10 features)
-├── final_code_featureSelection.ipynb   # Final 37→27→26 feature selection
-├──
-├── data/
-│   ├── mon_standard.pkl                # place monitored dataset here
-│   ├── unmon_standard10.pkl            # place unmonitored dataset 
-└── README.md
+├── baseline_feature10.ipynb          # 10-feature closed-world baseline
+├── final_code_featureSelection.ipynb # 37→27→26 feature selection pipeline (closed-world)
+├── final_modeling_code.ipynb         # Closed/Open-world modeling & scenario experiments
+├── data/                             # dataset .pkl files (user-provided)
+├── LICENSE                           # (optional) license file
+└── README.md                         # this document
 ```
-<br/>
-Note: Due to size and privacy constraints, the dataset files (`mon_standard.pkl`, `unmon_standard10.pkl`) are not included in this repository. Please place them under the data/ directory as shown above.
 
 ---
 
@@ -39,69 +123,65 @@ Note: Due to size and privacy constraints, the dataset files (`mon_standard.pkl`
 
 ### 2.1 Monitored Data (`mon_standard.pkl`)
 
-* Preprocessed monitored traffic traces.
-* Each `data[i]` contains multiple samples (traces) for the *i-th* URL.
-* Each sample is a sequence of integers `c`, where:
+* Contains **monitored website traces** preprocessed into sequences.
 
-  * **Sign** encodes packet **direction**:
+* Each trace is represented as:
 
-    * `c > 0` → outgoing
-    * `c < 0` → incoming
-  * **Absolute value** is used as a **timestamp** in the current code.
+  * `X1`: timestamp sequence
+  * `X2`: signed size sequence (direction × fixed size, `±512`)
 
-The loader returns:
+* Labels:
 
-* `X1`: list of timestamp sequences (`t_seq`)
-* `X2`: list of direction × fixed-size sequences (`s_seq`, values ±512)
-* `y`: class labels
+  * `USE_SUBLABEL = False` → website-level labels (e.g., 95 classes)
+  * `URL_PER_SITE = 10`
+  * `TOTAL_MON_URLS = 950` (95 sites × 10 URLs per site)
 
-Labeling options:
+* Loaded via:
 
-```python
-USE_SUBLABEL = False   # If True: each URL is a separate class; if False: site-level label
-URL_PER_SITE = 10
-TOTAL_MON_URLS = 950   # Example: 95 sites × 10 URLs
-```
-
-* If `USE_SUBLABEL = False`:
-  `label = i // URL_PER_SITE` (site-level)
-* If `USE_SUBLABEL = True`:
-  `label = i` (URL-level)
+  ```python
+  X1_mon, X2_mon, y_mon = load_monitored(
+      mon_path=MON_PATH,
+      use_sublabel=USE_SUBLABEL,
+      url_per_site=URL_PER_SITE,
+      total_urls=TOTAL_MON_URLS
+  )
+  ```
 
 ### 2.2 Unmonitored Data (`unmon_standard10.pkl`)
 
-* Contains unmonitored / background traffic.
-* Used for **open-world** experiments in the final model.
-* The current README only prepares the feature-selection side; open-world scenario experiments are left as placeholders.
+* Contains **unmonitored / background traffic**.
+* Used primarily in the **open-world experiments** in `final_modeling_code.ipynb`.
+* In open-world settings:
+
+  * Monitored samples are labeled as **0–94**.
+  * Unmonitored samples are labeled as **-1** (reject class).
 
 ---
 
 ## 3. Closed-World Baseline (10 Features)
 
-The baseline (in `baseline_feature10.ipynb` or equivalent) uses a **simpler feature extractor** to construct **10 features** per trace, such as:
+The baseline (in `baseline_feature10.ipynb`) constructs a simple closed-world classifier using **10 manually engineered traffic features** extracted from `(X1, X2)`.
 
-* Duration
-* Inter-arrival time statistics
-* Cumulative bytes
-* Burst count & average burst size
-* In/out packet counts & ratios
-* Std of outgoing inter-arrival times
+Conceptually, the baseline:
 
-Then it:
+1. Loads monitored data only.
 
-1. Trains a **RandomForestClassifier** with all 10 features.
-2. Computes:
+2. Extracts 10 features per trace, such as:
 
-   * Correlation matrix and identifies strongly correlated pairs.
-   * Feature importances from RF.
-3. Runs a **leave-one-out ablation study**:
+   * Duration
+   * Inter-arrival time statistics
+   * Cumulative bytes
+   * Burst-level statistics
+   * In/out packet counts and ratios
+   * Outgoing inter-arrival variability
 
-   * Remove each feature in turn and measure accuracy change.
-4. Selects a smaller, high-impact subset of features.
-5. Applies **IQR-based outlier removal** and compares accuracy before / after.
-6. Performs **hyperparameter tuning** with `HalvingRandomSearchCV`.
+3. Trains a `RandomForestClassifier` with a fixed configuration (e.g., `n_estimators=200`).
 
-This closed-world baseline acts as a **simple, feature-interpretable reference model.**
+4. Evaluates accuracy and feature importances.
+
+5. Performs a small **leave-one-feature-out ablation** to see which features are more critical.
+
+This closed-world baseline acts as a **simple, reasonably strong classical reference model**, not a tuned SOTA system.
 
 ---
 
@@ -129,35 +209,36 @@ The extractor computes:
 
 #### 4.2 Inter-Packet Interval (IPI) features
 
-From `ipi = diff(X1)`:
+Based on `ipi = diff(X1)`:
 
 * `IPI_Mean`, `IPI_Std`, `IPI_Max`, `IPI_Min`
-* `IPI_Skew`, `IPI_Kurt`
-* `IPI_P10`, `IPI_P25`, `IPI_P50`, `IPI_P75`, `IPI_P90`
+* `IPI_Skew`, `IPI_Kurt` (skewness, kurtosis)
+* Quantiles: `IPI_P10`, `IPI_P25`, `IPI_P50`, `IPI_P75`, `IPI_P90`
 
 #### 4.3 Packet size distribution features
 
-From `abs(X2)`:
+On `abs_sizes = abs(X2)`:
 
-* `Size_P10`, `Size_P25`, `Size_P50`, `Size_P75`, `Size_P90`
+* Quantiles: `Size_P10`, `Size_P25`, `Size_P50`, `Size_P75`, `Size_P90`
 
 #### 4.4 Burst-level features
 
-Bursts are defined as **maximal runs of packets with the same direction**.
+Bursts are defined as consecutive packets with the **same direction sign**. For each burst:
 
-For burst length (`bl`) and burst volume (`bv`):
+* `BurstLen_*`: length-based statistics
 
-* `BurstLen_Count` — number of bursts
-* `BurstLen_Mean`, `BurstLen_Std`, `BurstLen_Max`, `BurstLen_Min`
-* `BurstVol_Mean`, `BurstVol_Std`, `BurstVol_Max`, `BurstVol_Min`
+  * `BurstLen_Count`, `BurstLen_Mean`, `BurstLen_Std`, `BurstLen_Max`, `BurstLen_Min`
+* `BurstVol_*`: volume-based statistics
+
+  * `BurstVol_Mean`, `BurstVol_Std`, `BurstVol_Max`, `BurstVol_Min`
 
 #### 4.5 Cumulative volume features
 
-From `cumsum(abs(X2))`:
+On the cumulative sum of absolute sizes:
 
 * `CumSum_Mean`, `CumSum_Std`
 
-Overall:
+In total:
 
 ```text
 Total features: 37
@@ -174,12 +255,14 @@ X_df = build_feature_df(X1_mon, X2_mon)
 
 ## 5. Final Model – Feature Selection Pipeline (37 → 27 → 26)
 
-This section describes the **full feature selection pipeline** implemented in the final model.
+This section describes the **full feature selection pipeline** implemented in `final_code_featureSelection.ipynb`.
 
 ### 5.1 Step 1 – Correlation Analysis & Base RF
 
 1. Compute the **correlation matrix** of the 37 features.
+
 2. Identify **highly correlated feature pairs** with `|r| ≥ 0.9` and store them in `high_corr_pairs`.
+
 3. Train a baseline `RandomForestClassifier` on all 37 features:
 
    * Split the dataset once (`train_test_split` with `stratify=y`).
@@ -188,39 +271,41 @@ This section describes the **full feature selection pipeline** implemented in th
 
      * Baseline accuracy
      * Feature importances (`importances: Series[feature → importance]`)
-4. Plot:
 
-   * Correlation heatmap
-   * Horizontal bar chart of feature importances
+4. Visualize:
 
-This gives a **first view of redundancy** (correlated features) and a **ranking of importance**.
+   * Correlation heatmap (seaborn heatmap)
+   * Feature importances bar plot
+
+This gives:
+
+* A **baseline performance reference**.
+* An initial idea of **redundant** and **important** features.
 
 ---
 
 ### 5.2 Step 2 – Correlation-Based Pruning
 
-Goal: remove redundant features that are **highly correlated** and **less important**.
+Using `high_corr_pairs` and RF importances:
 
-Procedure:
+1. For each correlated pair `(a, b, r)` with `|r| ≥ 0.9`:
 
-1. Use a fixed train/test split (indices) for fairness.
-2. Compute baseline accuracy with all 37 features (`base_acc_corr`).
-3. For each pair `(a, b, r)` in `high_corr_pairs`:
+   * Compare `importances[a]` vs `importances[b]`.
+   * Mark the **less important** feature as a drop candidate.
 
-   * Compare `importances[a]` and `importances[b]`.
-   * Add the **less important** feature to `to_drop_corr`.
-4. Define:
+2. Remove these candidates from `X_df` to obtain a pruned DataFrame `X_pruned_corr`.
 
-   * `kept_cols = all_features - to_drop_corr`
-   * `X_pruned_corr = X_df[kept_cols]`
-5. Train RF again on `X_pruned_corr` with the same indices:
+3. Evaluate accuracy using the **same fixed train/test split**:
 
-   * Evaluate `pruned_acc`.
-   * Compare `Δ = pruned_acc - base_acc_corr`.
+   ```python
+   base_acc_corr = rf_acc_with_indices(X_df, y_mon, idx_train_corr, idx_test_corr)
+   pruned_acc_corr = rf_acc_with_indices(X_pruned_corr, y_mon, idx_train_corr, idx_test_corr)
+   ```
 
-This step checks **how much we can remove purely based on correlation**, while tracking accuracy.<br/>
+4. Compare `pruned_acc_corr` to `base_acc_corr`.
 
-Although correlation-based pruning successfully reduced the number of features, it resulted in a performance drop compared to the full 37-feature baseline. Since our goal was to reduce dimensionality without sacrificing accuracy, this approach was not adopted in the final feature set.
+In practice, **correlation-based pruning reduced the number of features but did not improve accuracy**.
+In fact, performance slightly degraded, so **this correlation-only pruning strategy was not adopted in the final feature set**.
 
 ---
 
@@ -228,7 +313,7 @@ Although correlation-based pruning successfully reduced the number of features, 
 
 Next, features with **near-zero RF importance** are removed.
 
-1. Identify zero-importance features:
+1. Identify zero-importance (or effectively zero) features:
 
    ```python
    zero_importance_feats = importances[importances <= 1e-6].index.tolist()
@@ -236,22 +321,19 @@ Next, features with **near-zero RF importance** are removed.
 
 2. Measure baseline accuracy with **all 37 features** on the same split.
 
-3. Drop `zero_importance_feats`:
+3. Drop the zero-importance features:
 
    ```python
-   X_pruned = X_df.drop(columns=zero_importance_feats)   # → 27 features
+   X_imp_pruned = X_df.drop(columns=zero_importance_feats)
+   acc_imp_pruned = rf_acc_with_indices(X_imp_pruned, y_mon, idx_train_corr, idx_test_corr)
    ```
 
-4. Re-train RF and compute accuracy for the 27-feature set.
+4. Compare:
 
-5. Compare:
+   * `accuracy (37 features)` vs `accuracy (37 − |zero_importance_feats|)`.
 
-   * Accuracy before vs after pruning
-   * Number of features (`37 → 27`)
-
-This yields a **27-feature pruned set**, where features with **essentially no contribution** (in importance) are removed.<br/>
-
-After removing the near-zero importance features, the model trained on the 27-feature set showed slightly improved accuracy compared to the full 37-feature baseline. Therefore, we decided to retain the 27-feature configuration as the primary pruned feature set.
+This yields a **27-feature pruned set**, where features with **essentially no contribution** (according to RF importance and ablation) are removed.
+In our experiments, the 27-feature configuration slightly **improved or at least maintained accuracy** compared to the 37-feature baseline, so we **kept this 27-feature set as our main pruned feature configuration**.
 
 ---
 
@@ -261,54 +343,52 @@ Goal: compare different combinations of **feature sets** (full vs pruned) and **
 
 #### 5.4.1 IQR-based outlier cleaning
 
-For a given DataFrame `df`:
+For a given DataFrame `df`, the IQR cleaner:
 
-* For each feature:
+1. For each feature column:
 
-  * Compute `Q1`, `Q3`, `IQR = Q3 − Q1`.
-  * Set bounds `[Q1 − 1.5·IQR, Q3 + 1.5·IQR]`.
-  * Keep samples within the bounds.
-* Combine masks across all features (logical AND).
-* Return cleaned DataFrame and mask.
+   * Compute `Q1`, `Q3`, and `IQR = Q3 − Q1`.
+   * Define lower/upper bounds:
+     `lower = Q1 − 1.5 * IQR`, `upper = Q3 + 1.5 * IQR`.
+   * Mark samples outside `[lower, upper]` as outliers.
 
-Applied to:
+2. Compute a global mask across all features.
 
-* `X_full` — all 37 features
-* `X_pruned` — the 27-feature pruned set
+3. Apply the mask to get `df_clean` and the corresponding `y_clean`.
 
-We obtain:
+This is applied to:
 
-* `X_full_clean`, `y_full_clean`
-* `X_pruned_clean`, `y_pruned_clean`
+* `X_full` = all 37 features
+* `X_pruned` = 27-feature pruned DataFrame
+
+resulting in:
+
+* `X_full_clean`, `X_pruned_clean`
 
 #### 5.4.2 RF accuracy for four configurations
 
-For each of the four combinations:
+The code evaluates four setups:
 
 1. `Full 37 / Raw`
 2. `Full 37 / Clean`
 3. `Pruned 27 / Raw`
 4. `Pruned 27 / Clean`
 
-We:
+For each:
 
-* Perform a stratified train/test split.
-* Train an RF with fixed hyperparameters.
-* Record the accuracy.
+* Train a RF with a **fixed configuration** and stratified split.
+* Record:
 
-Results are summarized in a small table (`acc_summary`), including:
+  * Number of features
+  * Number of samples after cleaning
+  * Accuracy
 
-* `config`
-* `n_features`
-* `n_samples`
-* `accuracy`
+The results are summarized in a small DataFrame and the **best config** is selected based on accuracy.
 
-The best configuration (`best_config`) is selected based on maximum accuracy.
+This step provides evidence for:
 
-For subsequent visualization:
-
-* `best_raw_df` and `best_clean_df` are chosen to match the best configuration.
-* A large grid of **Raw vs Clean boxplots** (log-transformed) is drawn for all features in the selected set to show distribution tightening after outlier removal.
+* Whether **IQR cleaning** helps.
+* Whether the **pruned (27-feature) set** outperforms the full 37-feature set when combined with outlier removal.
 
 ---
 
@@ -319,7 +399,9 @@ The focus then shifts to `X_pruned_clean` (27 features after pruning and IQR cle
 Steps:
 
 1. Fix a stratified train/test split (indices).
+
 2. Train RF using all 27 features → get **baseline accuracy**.
+
 3. For each feature `f`:
 
    * Drop `f` from the DataFrame.
@@ -328,41 +410,40 @@ Steps:
 
      * Accuracy with `f` removed
      * `Δ accuracy = acc_after_drop − base_acc_clean`
-4. Compile an **ablation summary table** and a **bar plot of Δ accuracy**.
 
-Interpretation:
+4. Sort features by their ablation performance.
 
-* Features whose removal **significantly decreases** accuracy are **important**.
-* Features whose removal **does not hurt** (or slightly improves) accuracy are good candidates for further pruning.
+This ablation reveals:
+
+* Which features are **critical** (large negative Δ when removed).
+* Which features are **redundant** or less impactful.
+
+These insights guide the next step, a **small combinatorial search**.
 
 ---
 
 ### 5.6 Step 6 – Searching for a Compact 26-Feature Set
 
-Based on the ablation results, a small subset of candidate features to drop is chosen:
+Based on the ablation results, a subset of relatively weak features is selected, e.g.:
 
 ```python
 to_drop = ["IPI_Mean", "BurstLen_Max", "BurstVol_Mean", "BurstLen_Std"]
 ```
 
-Then:
+Then the code:
 
-1. For all non-empty subsets `combo` of `to_drop`:
+1. Enumerates **all non-empty combinations** of these candidates.
 
-   * Drop `combo` from `X_pruned_clean`.
-   * Retrain RF on the same split.
-   * Record:
+2. For each combination:
 
-     * `drop_list`
-     * `num_feats`
-     * `accuracy`
-2. Sort results by accuracy.
-3. Inspect the best combinations to find a **good trade-off** between:
+   * Drops the corresponding features from `X_pruned_clean`.
+   * Retrains RF with fixed split.
+   * Measures accuracy.
 
-   * Fewer features
-   * Minimal or improved accuracy
+3. Sorts all combinations by accuracy.
 
-In the final decision, the combination that resulted in 26 features—by removing one additional feature such as IPI_Mean—produced the highest evaluation score across the tested subsets. Therefore, this 26-feature configuration was included as a candidate for further comparison.
+In our experiments, **one of these combinations produced a 26-feature configuration with the best accuracy among the tested subsets**.
+This best-scoring 26-feature set was therefore **included as a candidate configuration** for further comparison and later modeling.
 
 ---
 
@@ -374,174 +455,263 @@ To compare the 37-, 27-, and 26-feature models fairly:
 
 2. Apply **a single, common IQR cleaning pass** to `X_37`:
 
-   * Get `X_37_clean` and `common_mask`.
-   * Apply the same `common_mask` to `y` → `y_clean`.
-
-3. Define:
-
    ```python
-   zero_importance_feats = [
-       "IPI_Min", "IPI_P10", "IPI_P25",
-       "Size_P90", "Size_P50", "Size_P75", "Size_P10", "Size_P25",
-       "BurstLen_Min", "BurstVol_Min"
-   ]
-
-   X_27_clean = X_37_clean.drop(columns=zero_importance_feats)  # 27 features
-   X_26_clean = X_27_clean.drop(columns=["IPI_Mean"])           # 26 features
+   X_37_clean, common_mask = clean_outliers_iqr(X_37)
+   y_clean = y_all[common_mask]
    ```
 
-4. Using the **same clean dataset and the same train/test split**:
+3. Derive:
 
-   * Train RF with 37 features.
-   * Train RF with 27 features.
-   * Train RF with 26 features.
+   * `X_27_clean` by dropping the zero-importance 10 features from `X_37_clean`.
+   * `X_26_clean` by further dropping `IPI_Mean` (or the chosen feature) from `X_27_clean`.
 
-5. Evaluate each model with a unified helper:
+4. Train three RF models:
 
-   ```python
-   evaluate_model_performance(
-       model, X_test, y_test,
-       model_name="RF - XX feats",
-       scenario="multi"
-   )
-   ```
+   * RF on 37 features
+   * RF on 27 features
+   * RF on 26 features
 
-   * `scenario="multi"` uses macro-averaged Precision, Recall, F1.
-   * Optionally logs open-world related metrics if class `-1` exists in labels.
+5. Use the **same cleaned subset and same split** for all three models.
 
-This yields a **direct, fair comparison** between the full and reduced feature sets, confirming that moving to **27 or 26 features** does not significantly harm (and may even slightly improve) performance, while reducing dimensionality.
+6. Evaluate via `evaluate_model_performance(..., scenario="multi")`.
+
+This produces a **fair, apples-to-apples comparison**:
+
+* 37-feature baseline
+* 27-feature pruned model
+* 26-feature compact candidate
+
+In practice, the 27- and 26-feature models **match or slightly outperform** the 37-feature baseline, justifying their use in the final modeling notebook.
 
 ---
 
 ## 6. Evaluation Utilities
 
-The final model includes a general-purpose evaluation function:
+A common evaluation function is defined to standardize reporting:
 
 ```python
-evaluate_model_performance(model, X_test, y_test, model_name, scenario="binary" or "multi")
+evaluate_model_performance(
+    model,
+    X_test,
+    y_test,
+    model_name="...",
+    scenario="binary" or "multi"
+)
 ```
 
 Features:
 
-* Computes:
-
-  * Accuracy
-  * Precision, Recall, F1 (binary or macro)
-  * Optional ROC-AUC, PR-AUC (for binary)
-  * Unmonitored recall in open-world settings (if label `-1` is used)
 * Prints:
 
-  * A small metrics table (as a DataFrame)
-  * Classification report (for binary)
-* Plots:
+  * Accuracy
+  * Precision, Recall, F1
+  * Unmonitored recall (when label `-1` exists)
+  * Macro-averaged metrics (for multi-class)
 
-  * Confusion matrix
-  * ROC & Precision–Recall curves (for binary)
+* Displays:
 
-This utility is reused for:
+  * Confusion matrix (as heatmap)
+  * For binary scenario with `predict_proba`:
 
-* **Closed-world, multi-class evaluation** (`scenario="multi"`)
-* **Open-world, binary monitored vs unmonitored detection** (`scenario="binary"`)
+    * ROC curve with AUC
+    * Precision–Recall curve and PR-AUC
 
----
+This function is reused across:
 
-## 7. Scenario-Based Experiments 
-
-## 7.1 Closed-World Scenario (Scenario 1)
-
-* Goal:
-Classify a traffic trace into one of the 95 monitored websites.
-
-* Data:
-X_mon_clean, y_mon_clean (Monitored dataset only)
-
-* Setup:
-
-** Feature Set: Final 26 features
-
-** Preprocessing: IQR-based outlier removal (strict 1.5×IQR)
- 
-** Model: Random Forest Classifier (tuned hyperparameters)
-
-** Validation: 80/20 stratified train/test split
-
-* Key Result:
-
-Accuracy: ~79.5%
-
-* Conclusion: Data quality (cleaning) and expressive handcrafted features (percentiles, bursts, cumulative signals) were more impactful than model complexity.
-
-## 7.2 Open-World Scenario
-
-In the open-world setting, the classifier must distinguish monitored traffic from unknown / unmonitored traffic.
-
-### 7.2.1 Binary Detection (Scenario 2)
-
-* Goal:
-Detect whether a trace is Monitored (1) or Unmonitored (-1).
-
-* Challenge:
-Large class imbalance (Monitored ≫ Unmonitored)
-
-* Strategy:
-
-Imbalance Handling: SMOTE + Tomek (hybrid oversampling & cleaning)
-
-* Model: Random Forest (depth limit removed)
-
-* Key Result:
-
-  *Precision: ~94% (low false alarm rate)
-
-  *Recall: Balanced detection of unmonitored traffic
-
-  *Conclusion: SMOTE+Tomek outperformed undersampling by preserving precision and improving recall.
-
-### 7.2.2 Multi-Class Identification (Scenario 3)
-
-* Goal:
-Identify the website (0–94) or reject as Unmonitored (-1) → 96 classes total
-
-* Strategy:
-
-* Input: Cleaned monitored + raw unmonitored samples
-
-* Model: Random Forest with class_weight="balanced"
-
-* Method: One-stage multi-class classification
-
-* Key Result:
-
-Overall Accuracy: ~75%
-
-Unmonitored Recall (Rejection Rate): ~77.5%
-
-* Conclusion: Random Forest outperformed MLP in both speed and balanced accuracy for this feature space.
+* Closed-world scenarios (95 classes).
+* Open-world binary detection (monitored vs unmonitored).
+* Open-world multi-class + reject (95 + 1 classes).
+* Two-stage hierarchical modeling.
 
 ---
 
-## 8. How to Run
+## 7. Scenario-Based Experiments (final_modeling_code.ipynb)
+
+The notebook `final_modeling_code.ipynb` uses the cleaned, feature-selected datasets
+(e.g., `X_mon_clean`, `y_mon_clean`, `X_unmon_clean`, `X_all`, `y_multi`)
+to run several **scenarios**.
+
+### 7.1 Scenario 1 – Closed-World Model Comparison & RF Tuning
+
+* Split monitored data (`X_mon_clean`, `y_mon_clean`) into train/test.
+
+* Apply `StandardScaler`.
+
+* Compare multiple classifiers:
+
+  * `DecisionTreeClassifier`
+  * `KNeighborsClassifier`
+  * `GaussianNB`
+  * `LogisticRegression`
+  * `SVC (RBF)`
+  * `RandomForestClassifier`
+  * `MLPClassifier` (simple neural net)
+
+* For each model:
+
+  * Train on scaled training data
+  * Evaluate accuracy, macro F1, and runtime
+  * Summarize in a leaderboard DataFrame + bar plot
+
+* Perform **RandomizedSearchCV** on Random Forest:
+
+  * Search over `n_estimators`, `max_depth`, `min_samples_split`, `min_samples_leaf`, `max_features`, `bootstrap`, `class_weight`
+  * Optimize for accuracy on the closed-world task
+  * Evaluate tuned RF on the held-out test set:
+
+    * Accuracy
+    * Macro F1
+    * Confusion matrix
+    * (Optional) classification report
+
+### 7.2 Scenario 2 – Open-World Binary Detection (Monitored vs Unmonitored)
+
+* Construct a binary dataset:
+
+  * Monitored → label `1`
+  * Unmonitored → label `-1`
+
+* Use a common train/test split and `StandardScaler`.
+
+* Compare multiple **class-imbalance strategies**:
+
+  1. **Undersampling**:
+
+     * Downsample the majority class to match the minority.
+  2. **SMOTE + Tomek** (or plain SMOTE as fallback).
+  3. **Class-weighted RandomForest**.
+  4. **Borderline-SMOTE + EditedNearestNeighbours**.
+  5. **ADASYN + RF**.
+  6. **BalancedRandomForestClassifier**.
+  7. **XGBoost** with `scale_pos_weight`.
+
+* For each strategy:
+
+  * Train the classifier on the resampled / reweighted data.
+  * Evaluate using a helper `eval_model(name, y_test, y_pred, probas)`:
+
+    * Full classification report
+    * **Unmonitored F1-score** (label = `-1`)
+    * ROC-AUC when probabilities are available.
+
+* Additionally, for the SMOTE+Tomek RF model:
+
+  * Use `precision_recall_curve` on the **unmonitored class** (`-1`).
+  * Compute F1 for each threshold and select the **best threshold**.
+  * Apply this threshold to convert probabilities to final labels.
+  * Recompute classification report and confusion matrix.
+
+This scenario focuses on **robust detection of unmonitored traffic** (rejecting unknown sites).
+
+### 7.3 Scenario 3 – Open-World Multi-Class (95 Monitored + Reject Class)
+
+* Define labels:
+
+  * Monitored sites: `0–94`
+  * Unmonitored traffic: `-1` (reject)
+
+* Construct `X_all` and `y_multi = [0–94, -1]`.
+
+* Stratified train/test split.
+
+* Apply `StandardScaler`.
+
+* Tune a class-weighted `RandomForestClassifier` using `RandomizedSearchCV`:
+
+  * Search over:
+
+    * `n_estimators`
+    * `max_depth`
+    * `min_samples_split`
+    * `max_features`
+
+  * Optimize **macro F1-score** to account for class imbalance.
+
+* Evaluate the tuned RF with `evaluate_model_performance(..., scenario="multi")`:
+
+  * Accuracy
+  * Macro F1
+  * Unmonitored recall (how well `-1` is recovered)
+  * Confusion matrix spanning 96 labels (`-1` + 0–94)
+
+This scenario treats the open world as a **multi-class + reject** problem.
+
+### 7.4 Scenario 4 – Two-Stage Hierarchical Open-World Model
+
+A more realistic architecture is implemented as a **two-stage pipeline**:
+
+1. **Stage 1 – Binary Detector (Monitored vs Unmonitored)**
+
+   * Build binary labels from `y_train`:
+
+     * Unmonitored → `-1`
+     * Monitored → `1`
+
+   * Apply **SMOTE+Tomek** (or SMOTE fallback) on the training data.
+
+   * Train a binary `RandomForestClassifier` with:
+
+     * `n_estimators=500`, `max_depth=None`
+     * `class_weight='balanced'`
+
+2. **Stage 2 – Closed-World Identifier (95-class)**
+
+   * Filter training samples with `y_train != -1`.
+   * Train a 95-class Random Forest to classify among monitored sites `0–94`.
+
+3. **Two-Stage Inference**
+
+   * On the test set:
+
+     * Stage 1 predicts whether a sample is monitored or unmonitored.
+     * If predicted as monitored (`1`), pass to Stage 2 for 95-class identification.
+     * Otherwise, label remains `-1`.
+
+4. **Final Evaluation**
+
+   * Overall accuracy
+   * Macro F1
+   * Unmonitored recall (reject rate)
+   * Unmonitored-focused confusion analysis:
+
+     * True unmonitored: `-1 → -1`
+     * False alarms: `-1 → monitored-class`
+     * False alarm rate
+
+This hierarchical design mirrors **real-world deployment**, where we first detect whether traffic belongs to any monitored target set, and only then identify the specific site.
+
+---
+
+## 8. How to Run (Detailed)
 
 ### 8.1 Environment
 
 ```bash
 python >= 3.8
-
 pip install -r requirements.txt
 ```
 
-Example `requirements.txt`:
+Key dependencies:
 
-```text
-numpy
-pandas
-matplotlib
-seaborn
-scikit-learn
-scipy
+* `numpy`, `pandas`
+* `matplotlib`, `seaborn`
+* `scikit-learn`
+* `scipy`
+* `imbalanced-learn`
+* `xgboost` (for some imbalance strategies)
+
+### 8.2 Dataset Setup
+
+Place the dataset under `data/` (local run) or mount Google Drive (Colab) as described in **0.2 Dataset Setup**.
+
+Example (local):
+
+```python
+MON_PATH = "data/mon_standard.pkl"
+UNMON_PATH = "data/unmon_standard10.pkl"
 ```
 
-### 8.2 Baseline (Closed-world, 10 Features)
+### 8.3 Baseline (Closed-world, 10 Features)
 
 ```bash
 jupyter notebook baseline_feature10.ipynb
@@ -549,50 +719,43 @@ jupyter notebook baseline_feature10.ipynb
 
 Run all cells to:
 
-* Load monitored data
-* Extract 10 features
-* Train RF and perform basic feature analysis and IQR cleaning
+* Load monitored data from `MON_PATH`.
+* Extract 10 manually engineered statistical features.
+* Train a closed-world Random Forest baseline.
+* Compute feature importance and simple ablation.
+* Optionally, perform basic IQR-based cleaning.
 
-Or, if converted to a script:
-
-```bash
-python baseline_feature10.py
-```
-
-### 8.3 Final Model (37 → 27 → 26 Features)
+### 8.4 Feature Selection Pipeline (37 → 27 → 26 Features)
 
 ```bash
-jupyter notebook final_model_feature37.ipynb
+jupyter notebook final_code_featureSelection.ipynb
 ```
 
 Run all cells to:
 
-* Load monitored data
-* Extract 37 features
-* Perform correlation & importance analysis
-* Apply zero-importance & correlation-based pruning
-* Apply IQR outlier removal
-* Run ablation & combination search
-* Compare 37 / 27 / 26 feature models on a common clean dataset
+* Load monitored data.
+* Extract 37 advanced traffic features.
+* Build correlation matrices & RF importances.
+* Perform correlation-based pruning (for analysis), zero-importance pruning (37 → 27).
+* Apply IQR-based outlier removal.
+* Run ablation on the 27-feature set and small combination search (27 → 26).
+* Fairly compare **37 / 27 / 26** models on a common cleaned subset.
 
-Scenario-based experiments using `UNMON_PATH` can be added to a separate notebook or appended to the same one under **Section 7**.
+The resulting 27- and 26-feature sets are used as **candidate feature sets** for final modeling.
 
-### 8-4. Run in Google Colab
+### 8.5 Final Modeling & Scenario Experiments
 
-You can also open the notebook in Colab using the buttons below.
+```bash
+jupyter notebook final_modeling_code.ipynb
+```
 
-baseline_feature10.ipynb : [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kyungh2e2e/Molock_ML25-2/blob/main/baseline_feature10.ipynb)
+Run all cells to:
 
-final_code_featureSelection.ipynb : [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kyungh2e2e/Molock_ML25-2/blob/main/final_code_featureSelection.ipynb)
+* Compare multiple classifiers on the closed-world task.
+* Tune Random Forest hyperparameters with `RandomizedSearchCV`.
+* Conduct open-world binary detection experiments with multiple imbalance strategies.
+* Perform threshold tuning based on the unmonitored class F1.
+* Run open-world multi-class experiments (95 monitored + reject).
+* Train and evaluate a hierarchical two-stage model (detection → identification).
 
 ---
-
-
-
-
-
-
-
-
-
-
