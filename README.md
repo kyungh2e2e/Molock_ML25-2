@@ -153,6 +153,7 @@ final_modeling_code.ipynb : [![Open In Colab](https://colab.research.google.com/
 ├── final_code_featureSelection.ipynb # 37→27→26 feature selection pipeline (closed-world)
 ├── final_modeling_code.ipynb         # Closed/Open-world modeling & scenario experiments
 ├── data/                             # dataset .pkl files (user-provided)
+├── processed_traffic_data_26feats.pkl # Final feature dataset (for model reproducibility)
 ├── LICENSE                           # (optional) license file
 └── README.md                         # this document
 ```
@@ -802,3 +803,4 @@ Run all cells to:
 `processed_traffic_data_26feats.pkl` to the working directory.
 No raw dataset or feature-selection preprocessing is required.
 ---
+
