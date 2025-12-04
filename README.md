@@ -61,11 +61,11 @@ unmon_standard.pkl
 ```
 These files are not included in the repository due to privacy and size restrictions.
 
-> If you have access, place them in the project root before running:
+> Place them in the project root before running:
 - `baseline_feature10.ipynb`
-- `feature_selection_37_27_26.ipynb`
+- `final_code_featureSelection.ipynb`
 
-#### (B) To run Final Modeling notebook
+#### B) To run Final Modeling notebook
 No raw dataset required. Only the final processed file is needed.
 
 ```
@@ -75,9 +75,12 @@ processed_traffic_data_26feats.pkl
 ```
 
 This file is already included.  
+After downloading, place the `processed_traffic_data_26feats.pkl` file in the same directory as
+`final_modeling_code.ipynb`.
+
 If running on Colab, upload it to the working directory.
 
----
+
 
 ### Dataset pipeline diagram
 
@@ -90,37 +93,9 @@ Ablation / Tuning → 26   → final_modeling_code.ipynb
 
 ---
 
-You can either:
-
-#### (A) Run locally
-
-Place the `.pkl` files under a `data/` directory and set paths in the notebooks, e.g.:
-
-```python
-MON_PATH = "data/mon_standard.pkl"
-UNMON_PATH = "data/unmon_standard10.pkl"
-```
-
-#### (B) Run in Google Colab (with Google Drive)
-
-Upload the dataset to your own Google Drive and mount it:
-
-```python
-from google.colab import drive
-drive.mount('/content/drive')
-
-DATA_DIR = "/content/drive/MyDrive/"  # <- modify this
-MON_PATH = DATA_DIR + "mon_standard.pkl"
-UNMON_PATH = DATA_DIR + "unmon_standard10.pkl"
-```
-
-If the dataset is not found, update `DATA_DIR` to match your own Drive path.
-
----
-
 ### 0.3 Minimal Run Order
 
-#### Run locally
+#### A) Run locally
 
 1. **Closed-world baseline**
 
@@ -142,15 +117,15 @@ If the dataset is not found, update `DATA_DIR` to match your own Drive path.
 
 For detailed descriptions, see Section **8. How to Run (Detailed)**.
 
-#### Run in Google Colab
+#### B) Run in Google Colab
 
 Open the notebooks in Colab using the buttons below.
 
-baseline_feature10.ipynb : [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kyungh2e2e/Molock_ML25-2/blob/main/baseline_feature10.ipynb)
+  * baseline_feature10.ipynb : [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kyungh2e2e/Molock_ML25-2/blob/main/baseline_feature10.ipynb)
 
-final_code_featureSelection.ipynb : [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kyungh2e2e/Molock_ML25-2/blob/main/final_code_featureSelection.ipynb)
+  * final_code_featureSelection.ipynb : [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kyungh2e2e/Molock_ML25-2/blob/main/final_code_featureSelection.ipynb)
 
-final_modeling_code.ipynb : [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kyungh2e2e/Molock_ML25-2/blob/main/final_modeling_code.ipynb)
+  * final_modeling_code.ipynb : [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/kyungh2e2e/Molock_ML25-2/blob/main/final_modeling_code.ipynb)
 
 
 ---
@@ -206,6 +181,32 @@ final_modeling_code.ipynb : [![Open In Colab](https://colab.research.google.com/
 
   * Monitored samples are labeled as **0–94**.
   * Unmonitored samples are labeled as **-1** (reject class).
+
+
+### 2.3 Final Preprocessed Feature Dataset (`processed_traffic_data_26feats.pkl`)
+
+* This file contains the **final cleaned and feature-selected dataset** used directly for `final_modeling_code.ipynb`, without requiring raw sequence processing.
+
+Includes:
+
+| Variable name   | Description                                                        |
+| --------------- | ------------------------------------------------------------------ |
+| `X_mon_clean`   | Monitored feature matrix (26 selected features)                    |
+| `X_unmon_clean` | Unmonitored feature matrix                                         |
+| `y_mon_clean`   | Monitored labels (0–94)                                            |
+| `X_all`         | Combined open-world dataset (monitored + unmonitored)              |
+| `y_bin`         | Binary labels (monitored=1, unmonitored=-1)                        |
+| `y_multi`       | Multi-class labels (0–94 + reject -1)                              |
+| `feature_names` | Top 26 feature names selected from 37 (feature importance pruning) |
+
+* Used for:
+
+  * closed-world model comparison
+  * open-world binary detection
+  * imbalance strategies experiments (undersampling / SMOTE-Tomek / etc.)
+  * threshold optimization using PR-curve
+  * multi-class open-world evaluation
+  * two-stage hierarchical identification
 
 ---
 
@@ -813,5 +814,6 @@ Run all cells to:
 `processed_traffic_data_26feats.pkl` to the working directory.
 No raw dataset or feature-selection preprocessing is required.
 ---
+
 
 
