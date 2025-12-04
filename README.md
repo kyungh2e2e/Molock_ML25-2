@@ -17,7 +17,7 @@ This repository contains:
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 0.1 Requirements
 
@@ -759,3 +759,4 @@ Run all cells to:
 * Train and evaluate a hierarchical two-stage model (detection → identification).
 
 ---
+
