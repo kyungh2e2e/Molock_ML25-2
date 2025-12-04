@@ -37,7 +37,17 @@ This project uses two types of datasets:
 | **Raw traffic dataset** | Baseline / Feature Selection | ❌ (private & large) | `mon_standard.pkl`, `unmon_standard.pkl` |
 | **Processed feature dataset (26 features)** | Final Modeling | ✔ Included | `processed_traffic_data_26feats.pkl` |
 
----
+### Required Data Download
+To run `final_modeling_code.ipynb`, please download the preprocessed dataset below  
+and place the file in the same directory as the notebook:
+
+🔗 **Download link (Google Drive)**  
+https://drive.google.com/drive/folders/1Q4MdrZajhNzUMhX1s5b6ZUbyG7nSaMwX?usp=drive_link
+
+Required file:
+- `processed_traffic_data_26feats.pkl`
+
+> This contains the cleaned features & labels (26 selected features), allowing direct execution of the final experiment without running the preprocessing notebook.
 
 ### Setup Guide
 
@@ -803,4 +813,5 @@ Run all cells to:
 `processed_traffic_data_26feats.pkl` to the working directory.
 No raw dataset or feature-selection preprocessing is required.
 ---
+
 
