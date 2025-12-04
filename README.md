@@ -17,7 +17,7 @@ This repository contains:
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
 ### 0.1 Requirements
 
@@ -30,15 +30,55 @@ pip install -r requirements.txt
 
 ### 0.2 Dataset Setup
 
-Due to size, the dataset `.pkl` files are **not included** in this repository.
+This project uses two types of datasets:
 
-Expected files:
+| Dataset | Used for | Included in Repo | File |
+|---------|----------|------------------|------|
+| **Raw traffic dataset** | Baseline / Feature Selection | ❌ (private & large) | `mon_standard.pkl`, `unmon_standard.pkl` |
+| **Processed feature dataset (26 features)** | Final Modeling | ✔ Included | `processed_traffic_data_26feats.pkl` |
 
-```text
-data/
- ├── mon_standard.pkl       # monitored traffic
- └── unmon_standard10.pkl   # unmonitored traffic (for open-world)
+---
+
+### Setup Guide
+
+#### A) To run Baseline / Feature Selection notebooks
+You must have access to the raw dataset:
 ```
+
+mon_standard.pkl
+unmon_standard.pkl
+
+```
+These files are not included in the repository due to privacy and size restrictions.
+
+> If you have access, place them in the project root before running:
+- `baseline_feature10.ipynb`
+- `feature_selection_37_27_26.ipynb`
+
+#### (B) To run Final Modeling notebook
+No raw dataset required. Only the final processed file is needed.
+
+```
+
+processed_traffic_data_26feats.pkl
+
+```
+
+This file is already included.  
+If running on Colab, upload it to the working directory.
+
+---
+
+### Dataset pipeline diagram
+
+```
+Raw Packet
+   ↓ extract 37 features
+Feature Selection → 27
+Ablation / Tuning → 26   → final_modeling_code.ipynb
+```
+
+---
 
 You can either:
 
@@ -70,7 +110,7 @@ If the dataset is not found, update `DATA_DIR` to match your own Drive path.
 
 ### 0.3 Minimal Run Order
 
-#### (A) Run locally
+#### Run locally
 
 1. **Closed-world baseline**
 
@@ -92,7 +132,7 @@ If the dataset is not found, update `DATA_DIR` to match your own Drive path.
 
 For detailed descriptions, see Section **8. How to Run (Detailed)**.
 
-#### (B) Run in Google Colab
+#### Run in Google Colab
 
 Open the notebooks in Colab using the buttons below.
 
@@ -758,5 +798,7 @@ Run all cells to:
 * Run open-world multi-class experiments (95 monitored + reject).
 * Train and evaluate a hierarchical two-stage model (detection → identification).
 
+> **Note:** Before running this notebook, please upload the provided
+`processed_traffic_data_26feats.pkl` to the working directory.
+No raw dataset or feature-selection preprocessing is required.
 ---
-
